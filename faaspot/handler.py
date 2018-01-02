@@ -22,7 +22,7 @@ def manual_hog(git_url):
     print(outcome)
 
 
-def _build_response(response, stringify=True):
+def _build_response(response, stringify=False):
     response = json.dumps(response) if stringify else response
     return {
         'statusCode': 200,
