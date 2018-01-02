@@ -13,13 +13,20 @@ import stat
 from regexChecks import regexes
 from git import Repo
 
+
 def main():
-    parser = argparse.ArgumentParser(description='Find secrets hidden in the depths of git.')
-    parser.add_argument('--json', dest="output_json", action="store_true", help="Output in JSON")
-    parser.add_argument("--regex", dest="do_regex", action="store_true", help="Enable high signal regex checks")
-    parser.add_argument("--entropy", dest="do_entropy", help="Enable entropy checks")
-    parser.add_argument("--since_commit", dest="since_commit", help="Only scan from a given commit hash")
-    parser.add_argument("--max_depth", dest="max_depth", help="The max commit depth to go back when searching for secrets")
+    parser = argparse.ArgumentParser(
+        description='Find secrets hidden in the depths of git.')
+    parser.add_argument('--json', dest="output_json",
+                        action="store_true", help="Output in JSON")
+    parser.add_argument("--regex", dest="do_regex",
+                        action="store_true", help="Enable high signal regex checks")
+    parser.add_argument("--entropy", dest="do_entropy",
+                        help="Enable entropy checks")
+    parser.add_argument("--since_commit", dest="since_commit",
+                        help="Only scan from a given commit hash")
+    parser.add_argument("--max_depth", dest="max_depth",
+                        help="The max commit depth to go back when searching for secrets")
     parser.add_argument('git_url', type=str, help='URL for secret searching')
     parser.set_defaults(regex=False)
     parser.set_defaults(max_depth=1000000)
@@ -27,9 +34,11 @@ def main():
     parser.set_defaults(entropy=True)
     args = parser.parse_args()
     do_entropy = str2bool(args.do_entropy)
-    output = find_strings(args.git_url, args.since_commit, args.max_depth, args.output_json, args.do_regex, do_entropy)
-    project_path = output["project_path"]
-    shutil.rmtree(project_path, onerror=del_rw)
+    find_strings(args.git_url, args.since_commit,
+                 args.max_depth, args.output_json, args.do_regex, do_entropy)
+    # project_path = output["project_path"]
+    # shutil.rmtree(project_path, onerror=del_rw)
+
 
 def str2bool(v):
     if v == None:
@@ -45,9 +54,11 @@ def str2bool(v):
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 HEX_CHARS = "1234567890abcdefABCDEF"
 
+
 def del_rw(action, name, exc):
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
+
 
 def shannon_entropy(data, iterator):
     """
@@ -57,9 +68,9 @@ def shannon_entropy(data, iterator):
         return 0
     entropy = 0
     for x in iterator:
-        p_x = float(data.count(x))/len(data)
+        p_x = float(data.count(x)) / len(data)
         if p_x > 0:
-            entropy += - p_x*math.log(p_x, 2)
+            entropy += - p_x * math.log(p_x, 2)
     return entropy
 
 
@@ -80,6 +91,7 @@ def get_strings_of_set(word, char_set, threshold=20):
         strings.append(letters)
     return strings
 
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -90,10 +102,12 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+
 def clone_git_repo(git_url):
     project_path = tempfile.mkdtemp()
     Repo.clone_from(git_url, project_path)
     return project_path
+
 
 def print_results(printJson, issue):
     commit_time = issue['date']
@@ -105,31 +119,39 @@ def print_results(printJson, issue):
     path = issue['path']
 
     if printJson:
-        print(json.dumps(issue, sort_keys=True, indent=4))
+        return json.dumps(issue, sort_keys=True, indent=4)
     else:
         print("~~~~~~~~~~~~~~~~~~~~~")
         reason = "{}Reason: {}{}".format(bcolors.OKGREEN, reason, bcolors.ENDC)
         print(reason)
-        dateStr = "{}Date: {}{}".format(bcolors.OKGREEN, commit_time, bcolors.ENDC)
+        dateStr = "{}Date: {}{}".format(
+            bcolors.OKGREEN, commit_time, bcolors.ENDC)
         print(dateStr)
-        hashStr = "{}Hash: {}{}".format(bcolors.OKGREEN, commitHash, bcolors.ENDC)
+        hashStr = "{}Hash: {}{}".format(
+            bcolors.OKGREEN, commitHash, bcolors.ENDC)
         print(hashStr)
-        filePath = "{}Filepath: {}{}".format(bcolors.OKGREEN, path, bcolors.ENDC)
+        filePath = "{}Filepath: {}{}".format(
+            bcolors.OKGREEN, path, bcolors.ENDC)
         print(filePath)
 
         if sys.version_info >= (3, 0):
-            branchStr = "{}Branch: {}{}".format(bcolors.OKGREEN, branch_name, bcolors.ENDC)
+            branchStr = "{}Branch: {}{}".format(
+                bcolors.OKGREEN, branch_name, bcolors.ENDC)
             print(branchStr)
-            commitStr = "{}Commit: {}{}".format(bcolors.OKGREEN, prev_commit, bcolors.ENDC)
+            commitStr = "{}Commit: {}{}".format(
+                bcolors.OKGREEN, prev_commit, bcolors.ENDC)
             print(commitStr)
             print(printableDiff)
         else:
-            branchStr = "{}Branch: {}{}".format(bcolors.OKGREEN, branch_name.encode('utf-8'), bcolors.ENDC)
+            branchStr = "{}Branch: {}{}".format(
+                bcolors.OKGREEN, branch_name.encode('utf-8'), bcolors.ENDC)
             print(branchStr)
-            commitStr = "{}Commit: {}{}".format(bcolors.OKGREEN, prev_commit.encode('utf-8'), bcolors.ENDC)
+            commitStr = "{}Commit: {}{}".format(
+                bcolors.OKGREEN, prev_commit.encode('utf-8'), bcolors.ENDC)
             print(commitStr)
             print(printableDiff.encode('utf-8'))
         print("~~~~~~~~~~~~~~~~~~~~~")
+
 
 def find_entropy(printableDiff, commit_time, branch_name, prev_commit, blob, commitHash):
     stringsFound = []
@@ -142,12 +164,14 @@ def find_entropy(printableDiff, commit_time, branch_name, prev_commit, blob, com
                 b64Entropy = shannon_entropy(string, BASE64_CHARS)
                 if b64Entropy > 4.5:
                     stringsFound.append(string)
-                    printableDiff = printableDiff.replace(string, bcolors.WARNING + string + bcolors.ENDC)
+                    printableDiff = printableDiff.replace(
+                        string, bcolors.WARNING + string + bcolors.ENDC)
             for string in hex_strings:
                 hexEntropy = shannon_entropy(string, HEX_CHARS)
                 if hexEntropy > 3:
                     stringsFound.append(string)
-                    printableDiff = printableDiff.replace(string, bcolors.WARNING + string + bcolors.ENDC)
+                    printableDiff = printableDiff.replace(
+                        string, bcolors.WARNING + string + bcolors.ENDC)
     entropicDiff = None
     if len(stringsFound) > 0:
         entropicDiff = {}
@@ -162,12 +186,14 @@ def find_entropy(printableDiff, commit_time, branch_name, prev_commit, blob, com
         entropicDiff['reason'] = "High Entropy"
     return entropicDiff
 
+
 def regex_check(printableDiff, commit_time, branch_name, prev_commit, blob, commitHash):
     regex_matches = []
     for key in regexes:
         found_strings = regexes[key].findall(printableDiff)
         for found_string in found_strings:
-            found_diff = printableDiff.replace(printableDiff, bcolors.WARNING + found_string + bcolors.ENDC)
+            found_diff = printableDiff.replace(
+                printableDiff, bcolors.WARNING + found_string + bcolors.ENDC)
         if found_strings:
             foundRegex = {}
             foundRegex['date'] = commit_time
@@ -183,9 +209,9 @@ def regex_check(printableDiff, commit_time, branch_name, prev_commit, blob, comm
     return regex_matches
 
 
+def find_strings(git_url, since_commit=None, max_depth=1000000, printJson=True, do_regex=True, do_entropy=True):
+    result_string = ''
 
-
-def find_strings(git_url, since_commit=None, max_depth=None, printJson=False, do_regex=False, do_entropy=True):
     output = {"entropicDiffs": []}
     project_path = clone_git_repo(git_url)
     repo = Repo(project_path)
@@ -210,7 +236,7 @@ def find_strings(git_url, since_commit=None, max_depth=None, printJson=False, do
             if not prev_commit:
                 pass
             else:
-                #avoid searching the same diffs
+                # avoid searching the same diffs
                 hashes = str(prev_commit) + str(curr_commit)
                 if hashes in already_searched:
                     prev_commit = curr_commit
@@ -222,21 +248,26 @@ def find_strings(git_url, since_commit=None, max_depth=None, printJson=False, do
                     printableDiff = blob.diff.decode('utf-8', errors='replace')
                     if printableDiff.startswith("Binary files"):
                         continue
-                    commit_time =  datetime.datetime.fromtimestamp(prev_commit.committed_date).strftime('%Y-%m-%d %H:%M:%S')
+                    commit_time = datetime.datetime.fromtimestamp(
+                        prev_commit.committed_date).strftime('%Y-%m-%d %H:%M:%S')
                     foundIssues = []
                     if do_entropy:
-                        entropicDiff = find_entropy(printableDiff, commit_time, branch_name, prev_commit, blob, commitHash)
+                        entropicDiff = find_entropy(
+                            printableDiff, commit_time, branch_name, prev_commit, blob, commitHash)
                         if entropicDiff:
                             foundIssues.append(entropicDiff)
                     if do_regex:
-                        found_regexes = regex_check(printableDiff, commit_time, branch_name, prev_commit, blob, commitHash)
+                        found_regexes = regex_check(
+                            printableDiff, commit_time, branch_name, prev_commit, blob, commitHash)
                         foundIssues += found_regexes
                     for foundIssue in foundIssues:
-                        print_results(printJson, foundIssue)
+                        result_string += print_results(printJson,
+                                                       foundIssue) or ''
 
             prev_commit = curr_commit
-    output["project_path"] = project_path
-    return output
+    shutil.rmtree(project_path, onerror=del_rw)
+    return result_string
+
 
 if __name__ == "__main__":
     main()

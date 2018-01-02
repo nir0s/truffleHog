@@ -1,0 +1,14 @@
+logo: 'http://www.trcpodcast.com/wp-content/uploads/2016/12/trufflehog.jpg'
+
+functions:
+    hog:
+        runtime: python2.7
+        handler: handler.hog
+        description: "Look up secrets in a repository"
+        qparams:
+            git_url:
+                type: string
+                description: "Git repository URL to search in"
+                required: true
+        memory: 128
+        timeout: 60
